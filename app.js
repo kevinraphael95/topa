@@ -362,15 +362,6 @@ function toggleTheme() {
   localStorage.setItem('pausepay_theme', next);
 }
 
-// Apply saved theme immediately
-(function () {
-  const saved = localStorage.getItem('pausepay_theme');
-  // Also respect OS preference if no saved choice
-  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const theme = saved || (prefersDark ? 'dark' : 'light');
-  if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-})();
-
 // --- Currency change ---
 
 currencySelect.addEventListener('change', function () {
