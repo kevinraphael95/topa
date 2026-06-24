@@ -159,7 +159,6 @@ function startTimer() {
 
   // Badge → live
   sessionBadge.classList.add('active');
-  badgeLabel.textContent = type === 'pipi' ? '💧 En cours' : '💩 En cours';
   badgeLabel.textContent = currentType === 'pipi' ? '💧 En cours' : '💩 En cours';
 
   activateCounter();
