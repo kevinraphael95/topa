@@ -45,27 +45,29 @@
         <span class="salary-suffix">brut / heure</span>
       </div>
       <select class="cur-select" id="currencySelect" aria-label="Devise">
-        <option value="€">€ EUR</option>
-        <option value="$">$ USD</option>
-        <option value="£">£ GBP</option>
-        <option value="¥">¥ JPY</option>
+        <option value="€ EUR">€ EUR</option>
+        <option value="$ USD">$ USD</option>
+        <option value="£ GBP">£ GBP</option>
+        <option value="¥ JPY">¥ JPY</option>
       </select>
     </div>
 
     <!-- Counter hero -->
     <section class="counter-wrap" aria-label="Compteur de pause en cours">
 
+      <!-- Live badge — was "liveIndicator" in JS but id="sessionBadge" in HTML; unified to sessionBadge -->
       <div class="session-badge" id="sessionBadge">
         <span class="session-badge-dot" aria-hidden="true"></span>
         <span id="badgeLabel">En attente</span>
       </div>
 
+      <!-- Split counter: JS writes to each part individually -->
       <div class="counter-main" aria-live="polite" aria-atomic="true">
-        <span class="counter-integer" id="cInt">0</span>
-        <span class="counter-sep"  id="cSep">,</span>
-        <span class="counter-dec-big"   id="cDecBig">00</span>
-        <span class="counter-dec-small" id="cDecSmall">00000</span>
-        <span class="counter-currency"  id="cCur">€</span>
+        <span class="counter-integer"  id="cInt">0</span>
+        <span class="counter-sep"      id="cSep">,</span>
+        <span class="counter-dec-big"  id="cDecBig">00</span>
+        <span class="counter-dec-small" id="cDecSmall">0000</span>
+        <span class="counter-currency" id="cCur">€</span>
       </div>
 
       <p class="counter-unit" id="heroSub">gagné pendant cette pause</p>
@@ -106,6 +108,11 @@
         <div class="stat-val" id="statAvg">—</div>
         <div class="stat-sub">par pause</div>
       </div>
+    </div>
+
+    <!-- Bar chart (IDs present so JS can find them directly) -->
+    <div class="chart-section" id="chartSection" style="display:none">
+      <div class="bar-chart" id="barChart"></div>
     </div>
 
     <!-- History -->
