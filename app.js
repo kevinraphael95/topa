@@ -1,35 +1,72 @@
 /* =========================================
-   PausePay — app.js
+   FlushPay — app.js  (fixed & optimised)
    ========================================= */
 
 'use strict';
 
 // --- State ---
-let timer      = null;
-let startTime  = null;
-let elapsed    = 0;
-let currentType = 'pipi';
-let currency   = '€';
-let sessions   = JSON.parse(localStorage.getItem('pausepay_sessions') || '[]');
+let timer        = null;
+let startTime    = null;
+let elapsed      = 0;
+let currentType  = 'pipi';
+let currency     = '€';
+let sessions     = JSON.parse(localStorage.getItem('pausepay_sessions') || '[]');
 
 // --- DOM refs ---
-const heroAmount   = document.getElementById('heroAmount');
-const heroSub      = document.getElementById('heroSub');
-const timerDisplay = document.getElementById('timerDisplay');
-const liveIndicator = document.getElementById('liveIndicator');
-const startBtn     = document.getElementById('startBtn');
-const stopBtn      = document.getElementById('stopBtn');
-const cancelBtn    = document.getElementById('cancelBtn');
-const salaryInput  = document.getElementById('salaryInput');
+// Counter parts (matches the HTML structure)
+const cInt        = document.getElementById('cInt');
+const cSep        = document.getElementById('cSep');
+const cDecBig     = document.getElementById('cDecBig');
+const cDecSmall   = document.getElementById('cDecSmall');
+const cCur        = document.getElementById('cCur');
+
+// Badge / sub / timer
+const sessionBadge  = document.getElementById('sessionBadge');
+const badgeLabel    = document.getElementById('badgeLabel');
+const heroSub       = document.getElementById('heroSub');
+const timerDisplay  = document.getElementById('timerDisplay');
+
+// Type tabs (HTML uses tabPipi / tabCaca)
+const tabPipi   = document.getElementById('tabPipi');
+const tabCaca   = document.getElementById('tabCaca');
+
+// Buttons
+const startBtn  = document.getElementById('startBtn');
+const stopBtn   = document.getElementById('stopBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+
+// Salary / currency
+const salaryInput    = document.getElementById('salaryInput');
 const currencySelect = document.getElementById('currencySelect');
-const currencySymbol = document.getElementById('currencySymbol');
-const historyList  = document.getElementById('historyList');
-const statTotal    = document.getElementById('statTotal');
-const statTime     = document.getElementById('statTime');
-const statCount    = document.getElementById('statCount');
-const statAvg      = document.getElementById('statAvg');
-const chartSection = document.getElementById('chartSection');
-const barChart     = document.getElementById('barChart');
+
+// History & stats
+const historyList = document.getElementById('historyList');
+const statTotal   = document.getElementById('statTotal');
+const statTime    = document.getElementById('statTime');
+const statCount   = document.getElementById('statCount');
+const statAvg     = document.getElementById('statAvg');
+
+// Chart (inserted dynamically if missing)
+let chartSection = document.getElementById('chartSection');
+let barChart     = document.getElementById('barChart');
+
+// Ensure chart section exists in DOM (it was missing from the HTML)
+if (!chartSection) {
+  chartSection = document.createElement('div');
+  chartSection.id = 'chartSection';
+  chartSection.className = 'chart-section';
+  chartSection.style.display = 'none';
+
+  barChart = document.createElement('div');
+  barChart.id = 'barChart';
+  barChart.className = 'bar-chart';
+
+  chartSection.appendChild(barChart);
+
+  // Insert after .stats-row
+  const statsRow = document.querySelector('.stats-row');
+  if (statsRow) statsRow.after(chartSection);
+}
 
 // --- Helpers ---
 
@@ -39,9 +76,9 @@ function getSalary() {
 
 function formatTime(ms) {
   const totalSec = Math.floor(ms / 1000);
-  const h   = Math.floor(totalSec / 3600);
-  const m   = Math.floor((totalSec % 3600) / 60);
-  const s   = totalSec % 60;
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
   return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
 }
 
@@ -63,12 +100,51 @@ function saveSessions() {
   localStorage.setItem('pausepay_sessions', JSON.stringify(sessions));
 }
 
+// --- Counter display ---
+// Splits a number like 0.001234 into typographic layers:
+//   cInt      → "0"
+//   cDecBig   → "00"   (centimes — same visual weight as integer)
+//   cDecSmall → "1234" (sub-centime precision)
+//   cCur      → currency symbol
+
+function setCounterValue(value) {
+  const str    = value.toFixed(6); // e.g. "0.001234"
+  const [intPart, decPart] = str.split('.');
+
+  cInt.textContent      = intPart;
+  cDecBig.textContent   = decPart.slice(0, 2);
+  cDecSmall.textContent = decPart.slice(2);   // 4 sub-centime digits
+  cCur.textContent      = currency;
+}
+
+function resetCounter() {
+  cInt.textContent      = '0';
+  cSep.textContent      = ',';
+  cDecBig.textContent   = '00';
+  cDecSmall.textContent = '0000';
+  cCur.textContent      = currency;
+
+  // Remove active colouring
+  [cInt, cSep, cDecBig, cDecSmall].forEach(el => el.classList.remove('active'));
+}
+
+function activateCounter() {
+  [cInt, cSep, cDecBig, cDecSmall].forEach(el => el.classList.add('active'));
+}
+
 // --- Type selector ---
+// HTML uses tabPipi / tabCaca with class "type-tab" / "type-tab active"
 
 function setType(type) {
   currentType = type;
-  document.getElementById('typePipi').className = 'type-btn' + (type === 'pipi' ? ' active-pipi' : '');
-  document.getElementById('typeCaca').className = 'type-btn' + (type === 'caca' ? ' active-caca' : '');
+  tabPipi.classList.toggle('active', type === 'pipi');
+  tabCaca.classList.toggle('active', type === 'caca');
+
+  if (!timer) {
+    heroSub.textContent = type === 'pipi'
+      ? 'gagné pendant cette pause'
+      : 'gagné pendant cette pause';
+  }
 }
 
 // --- Timer controls ---
@@ -81,11 +157,15 @@ function startTimer() {
   stopBtn.disabled   = false;
   cancelBtn.disabled = false;
 
-  liveIndicator.classList.add('visible');
-  heroAmount.classList.add('active');
+  // Badge → live
+  sessionBadge.classList.add('active');
+  badgeLabel.textContent = type === 'pipi' ? '💧 En cours' : '💩 En cours';
+  badgeLabel.textContent = currentType === 'pipi' ? '💧 En cours' : '💩 En cours';
+
+  activateCounter();
   heroSub.textContent = currentType === 'pipi'
-    ? 'Pause pipi en cours... 💧'
-    : 'Pause caca en cours... 💩';
+    ? 'gagné depuis le début de ta pause pipi 💧'
+    : 'gagné depuis le début de ta pause caca 💩';
 
   timer = setInterval(tick, 100);
 }
@@ -98,9 +178,16 @@ function tick() {
 
   const earned = calcEarned(elapsed);
   if (earned !== null) {
-    heroAmount.textContent = earned.toFixed(4) + currency;
+    setCounterValue(earned);
   } else {
-    heroAmount.textContent = formatTime(elapsed);
+    // No salary set: show elapsed as "0,MM,SS" instead
+    const totalSec = Math.floor(elapsed / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    cInt.textContent      = String(m).padStart(2, '0');
+    cDecBig.textContent   = String(s).padStart(2, '0');
+    cDecSmall.textContent = '';
+    cCur.textContent      = '';
   }
 }
 
@@ -128,8 +215,8 @@ function stopTimer() {
 
 function cancelTimer() {
   clearInterval(timer);
-  timer = null;
-  elapsed = 0;
+  timer    = null;
+  elapsed  = 0;
   resetHero();
 }
 
@@ -138,15 +225,15 @@ function resetHero() {
   stopBtn.disabled   = true;
   cancelBtn.disabled = true;
 
-  liveIndicator.classList.remove('visible');
-  heroAmount.classList.remove('active');
-  heroAmount.style.fontSize = '';
-  heroAmount.textContent = '0.0000' + currency;
+  sessionBadge.classList.remove('active');
+  badgeLabel.textContent = 'En attente';
+
+  resetCounter();
 
   timerDisplay.textContent = '00:00:00';
   timerDisplay.classList.remove('active');
 
-  heroSub.textContent = 'Lance un chrono pour commencer';
+  heroSub.textContent = 'gagné pendant cette pause';
 }
 
 // --- Delete & clear ---
@@ -167,19 +254,20 @@ function clearAll() {
 }
 
 // --- Render history ---
+// CSS uses .h-cols / .h-row — aligned to what style.css actually defines
 
 function renderHistory() {
   if (sessions.length === 0) {
     historyList.innerHTML = `
-      <div class="history-empty">
-        <i class="ti ti-toilet-paper" aria-hidden="true"></i>
-        Aucune pause enregistrée encore.<br>Lance ton premier chrono !
+      <div class="empty">
+        <span class="empty-icon" aria-hidden="true">🚽</span><br>
+        Aucune pause enregistrée.<br>Lance ton premier chrono !
       </div>`;
     return;
   }
 
   const head = `
-    <div class="history-col-head">
+    <div class="h-cols">
       <span>Type</span>
       <span>Heure</span>
       <span>Durée</span>
@@ -193,18 +281,16 @@ function renderHistory() {
       : '—';
 
     const badge = s.type === 'pipi'
-      ? `<span class="history-type-badge badge-pipi">💧 Pipi</span>`
-      : `<span class="history-type-badge badge-caca">💩 Caca</span>`;
+      ? `<span class="badge badge-pipi">💧 Pipi</span>`
+      : `<span class="badge badge-caca">💩 Caca</span>`;
 
     return `
-      <div class="history-row">
+      <div class="h-row">
         ${badge}
-        <span class="h-time">${s.date} ${s.start}</span>
-        <span class="h-duration">${formatDuration(s.duration)}</span>
-        <span class="h-earned">${earnedStr}</span>
-        <button class="h-delete" onclick="deleteSession(${i})" aria-label="Supprimer cette pause">
-          <i class="ti ti-x" aria-hidden="true"></i>
-        </button>
+        <span class="h-time-val">${s.date} ${s.start}</span>
+        <span class="h-dur">${formatDuration(s.duration)}</span>
+        <span class="h-earn">${earnedStr}</span>
+        <button class="del-btn" onclick="deleteSession(${i})" aria-label="Supprimer cette pause">✕</button>
       </div>`;
   }).join('');
 
@@ -218,19 +304,16 @@ function renderStats() {
   const totalMs     = sessions.reduce((acc, s) => acc + s.duration, 0);
   const count       = sessions.length;
 
-  // Total earned
+  // Use current currency symbol for display
   statTotal.textContent = totalEarned.toFixed(2) + currency;
 
-  // Total time
   const totalMin = Math.round(totalMs / 60000);
   statTime.textContent = totalMin >= 60
     ? `${(totalMin / 60).toFixed(1)}h`
     : `${totalMin} min`;
 
-  // Count
   statCount.textContent = count;
 
-  // Average duration
   statAvg.textContent = count > 0
     ? formatDuration(Math.round(totalMs / count))
     : '—';
@@ -244,9 +327,9 @@ function renderStats() {
   if (pipiSessions.length > 0 || cacaSessions.length > 0) {
     chartSection.style.display = 'block';
 
-    const maxMs    = Math.max(pipiMs, cacaMs, 1);
-    const pipiPct  = Math.round((pipiMs / maxMs) * 100);
-    const cacaPct  = Math.round((cacaMs / maxMs) * 100);
+    const maxMs   = Math.max(pipiMs, cacaMs, 1);
+    const pipiPct = Math.round((pipiMs / maxMs) * 100);
+    const cacaPct = Math.round((cacaMs / maxMs) * 100);
 
     barChart.innerHTML = `
       <div class="bar-row bar-pipi">
@@ -274,11 +357,13 @@ function renderStats() {
 
 currencySelect.addEventListener('change', function () {
   currency = this.value.split(' ')[0];
-  currencySymbol.textContent = currency;
-  if (!timer) heroAmount.textContent = '0.0000' + currency;
+  // Sync the visible currency symbol in the counter
+  cCur.textContent = currency;
+  if (!timer) resetCounter();
   renderStats();
 });
 
 // --- Init ---
+resetCounter();   // sets correct currency symbol on load
 renderHistory();
 renderStats();
