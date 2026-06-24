@@ -3,33 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PausePay — Ce que ta vessie coûte à ton employeur</title>
+  <title>FlushPay — Chaque pause compte</title>
+  <meta name="description" content="Découvrez combien vous gagnez pendant vos pauses pipi et caca au travail.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="topbar">
+  <header class="topbar">
     <div class="logo">
-      <div class="logo-icon">💧</div>
-      <span class="logo-name">PausePay</span>
-      <span class="logo-badge">TRACKER</span>
+      <div class="logo-mark">
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 1.5C8 1.5 4 5.5 4 9A4 4 0 008 13 4 4 0 0012 9C12 5.5 8 1.5 8 1.5Z" fill="#00E87A"/>
+          <path d="M7 7.5L9 6.5V10.5" stroke="#003D1F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6.5 10.5H9.5" stroke="#003D1F" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="logo-name">FlushPay</span>
+      <div class="logo-dot" aria-hidden="true"></div>
     </div>
-    <span class="version">v1.0.0</span>
-  </div>
+    <button class="nav-pill" onclick="clearAll()">Tout effacer</button>
+  </header>
 
   <main class="main">
 
-    <div class="salary-section">
-      <label><i class="ti ti-briefcase" aria-hidden="true"></i> Salaire horaire</label>
-      <div class="salary-input-wrap">
-        <i class="ti ti-currency-euro" aria-hidden="true"></i>
-        <input type="number" id="salaryInput" placeholder="15.00" min="0" step="0.5" aria-label="Salaire horaire brut">
-        <span>brut / heure</span>
+    <!-- Salary input -->
+    <div class="salary-row">
+      <div class="salary-field">
+        <span class="salary-prefix">Salaire</span>
+        <input
+          class="salary-input"
+          type="number"
+          id="salaryInput"
+          placeholder="15.00"
+          min="0"
+          step="0.5"
+          value="15"
+          aria-label="Salaire horaire brut"
+        >
+        <span class="salary-suffix">brut / heure</span>
       </div>
-      <select class="currency-select" id="currencySelect" aria-label="Devise">
+      <select class="cur-select" id="currencySelect" aria-label="Devise">
         <option value="€">€ EUR</option>
         <option value="$">$ USD</option>
         <option value="£">£ GBP</option>
@@ -37,79 +52,77 @@
       </select>
     </div>
 
-    <div class="hero" role="region" aria-label="Chronomètre actif">
-      <div class="hero-label">Payé pour partir aux toilettes</div>
-      <div class="live-indicator" id="liveIndicator" aria-live="polite">
-        <span class="status-dot active"></span> EN DIRECT
-      </div>
-      <div class="hero-amount" id="heroAmount" aria-live="polite">0.0000<span id="currencySymbol">€</span></div>
-      <div class="hero-sub" id="heroSub">Lance un chrono pour commencer</div>
-      <div class="timer-display" id="timerDisplay" aria-live="polite">00:00:00</div>
+    <!-- Counter hero -->
+    <section class="counter-wrap" aria-label="Compteur de pause en cours">
 
-      <div class="type-selector" role="group" aria-label="Type de pause">
-        <button class="type-btn active-pipi" id="typePipi" onclick="setType('pipi')">💧 Pipi</button>
-        <button class="type-btn" id="typeCaca" onclick="setType('caca')">💩 Caca</button>
+      <div class="session-badge" id="sessionBadge">
+        <span class="session-badge-dot" aria-hidden="true"></span>
+        <span id="badgeLabel">En attente</span>
       </div>
 
-      <div class="btn-group">
-        <button class="btn btn-primary" id="startBtn" onclick="startTimer()">
-          <i class="ti ti-player-play" aria-hidden="true"></i> Démarrer
-        </button>
-        <button class="btn btn-danger" id="stopBtn" onclick="stopTimer()" disabled>
-          <i class="ti ti-player-stop" aria-hidden="true"></i> Terminer
-        </button>
-        <button class="btn btn-secondary" id="cancelBtn" onclick="cancelTimer()" disabled>
-          <i class="ti ti-x" aria-hidden="true"></i> Annuler
-        </button>
+      <div class="counter-main" aria-live="polite" aria-atomic="true">
+        <span class="counter-integer" id="cInt">0</span>
+        <span class="counter-sep"  id="cSep">,</span>
+        <span class="counter-dec-big"   id="cDecBig">00</span>
+        <span class="counter-dec-small" id="cDecSmall">00000</span>
+        <span class="counter-currency"  id="cCur">€</span>
+      </div>
+
+      <p class="counter-unit" id="heroSub">gagné pendant cette pause</p>
+      <div class="timer-mono" id="timerDisplay" aria-live="polite">00:00:00</div>
+
+      <div class="type-tabs" role="group" aria-label="Type de pause">
+        <button class="type-tab active" id="tabPipi" onclick="setType('pipi')">💧 Pipi</button>
+        <button class="type-tab"        id="tabCaca" onclick="setType('caca')">💩 Caca</button>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-start" id="startBtn"  onclick="startTimer()">▶ Démarrer</button>
+        <button class="btn btn-stop"  id="stopBtn"   onclick="stopTimer()"   disabled>■ Terminer</button>
+        <button class="btn btn-ghost" id="cancelBtn" onclick="cancelTimer()" disabled>✕ Annuler</button>
+      </div>
+
+    </section>
+
+    <!-- Stats -->
+    <div class="stats-row" role="region" aria-label="Statistiques">
+      <div class="stat">
+        <div class="stat-label">💰 Total gagné</div>
+        <div class="stat-val green" id="statTotal">0.00€</div>
+        <div class="stat-sub">toutes pauses</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">⏱ Temps total</div>
+        <div class="stat-val" id="statTime">0 min</div>
+        <div class="stat-sub">aux toilettes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"># Pauses</div>
+        <div class="stat-val" id="statCount">0</div>
+        <div class="stat-sub">enregistrées</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">∅ Durée moy.</div>
+        <div class="stat-val" id="statAvg">—</div>
+        <div class="stat-sub">par pause</div>
       </div>
     </div>
 
-    <div class="stats-grid" role="region" aria-label="Statistiques">
-      <div class="stat-card stat-gold">
-        <div class="stat-card-label"><i class="ti ti-coin" aria-hidden="true"></i> Total gagné</div>
-        <div class="stat-card-value" id="statTotal">0.00<span class="cs"></span></div>
-        <div class="stat-card-sub">sur toutes les pauses</div>
-      </div>
-      <div class="stat-card stat-blue">
-        <div class="stat-card-label"><i class="ti ti-clock" aria-hidden="true"></i> Temps total</div>
-        <div class="stat-card-value" id="statTime">0 min</div>
-        <div class="stat-card-sub">aux toilettes</div>
-      </div>
-      <div class="stat-card stat-green">
-        <div class="stat-card-label"><i class="ti ti-hash" aria-hidden="true"></i> Pauses</div>
-        <div class="stat-card-value" id="statCount">0</div>
-        <div class="stat-card-sub">enregistrées</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-label"><i class="ti ti-trending-up" aria-hidden="true"></i> Moyenne</div>
-        <div class="stat-card-value" id="statAvg">—</div>
-        <div class="stat-card-sub">par pause</div>
-      </div>
-    </div>
-
-    <div class="chart-bar-wrap" id="chartSection" style="display:none" role="region" aria-label="Répartition par type">
-      <div class="chart-inner">
-        <h4>Répartition par type</h4>
-        <div class="bar-chart" id="barChart"></div>
-      </div>
-    </div>
-
-    <div class="history-section" role="region" aria-label="Historique">
-      <div class="history-header">
-        <h3><i class="ti ti-list" aria-hidden="true"></i> Historique des pauses</h3>
-        <button class="btn btn-secondary btn-sm" onclick="clearAll()">
-          <i class="ti ti-trash" aria-hidden="true"></i> Tout effacer
-        </button>
+    <!-- History -->
+    <section class="history" aria-label="Historique des pauses">
+      <div class="history-head">
+        <h2 class="history-title">Historique</h2>
+        <button class="btn-clear" onclick="clearAll()">Tout effacer</button>
       </div>
       <div id="historyList">
-        <div class="history-empty">
-          <i class="ti ti-toilet-paper" aria-hidden="true"></i>
-          Aucune pause enregistrée encore.<br>Lance ton premier chrono !
+        <div class="empty">
+          <span class="empty-icon" aria-hidden="true">🚽</span><br>
+          Aucune pause enregistrée.<br>Lance ton premier chrono !
         </div>
       </div>
-    </div>
+    </section>
 
-    <footer class="footer-note">PausePay — ce que ta vessie coûte à ton employeur 💸</footer>
+    <footer class="footer">FlushPay — chaque pause compte 💧</footer>
 
   </main>
 
