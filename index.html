@@ -1,146 +1,198 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
   <script>
-    (function(){var t=localStorage.getItem('pausepay_theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
+    (function(){var t=localStorage.getItem('fp_theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FlushPay — Chaque pause compte</title>
-  <meta name="description" content="Découvrez combien vous gagnez pendant vos pauses pipi et caca au travail.">
+  <title>FlushPay — Chaque pause est payée</title>
+  <meta name="description" content="Combien gagnez-vous pendant vos pauses toilettes ? FlushPay calcule ça en temps réel.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- Ambient background orb -->
+  <div class="bg-orb" aria-hidden="true"></div>
+
+  <!-- ── TOPBAR ── -->
   <header class="topbar">
     <div class="logo">
-      <div class="logo-mark">
-        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M8 1.5C8 1.5 4 5.5 4 9A4 4 0 008 13 4 4 0 0012 9C12 5.5 8 1.5 8 1.5Z" fill="#00E87A"/>
-          <path d="M7 7.5L9 6.5V10.5" stroke="#003D1F" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M6.5 10.5H9.5" stroke="#003D1F" stroke-width="1.3" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <span class="logo-name">FlushPay</span>
-      <div class="logo-dot" aria-hidden="true"></div>
+      <svg class="logo-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="28" height="28" rx="8" fill="var(--accent)"/>
+        <path d="M14 5C14 5 9 10.2 9 14.5A5 5 0 0014 19.5 5 5 0 0019 14.5C19 10.2 14 5 14 5Z" fill="var(--accent-fg)"/>
+        <path d="M12.5 13L14.5 12V16.5" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 16.5H16" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span class="logo-text">FlushPay</span>
+      <span class="logo-badge">BETA</span>
     </div>
-    <div class="topbar-right">
-      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Changer le thème">
-        <span class="icon-moon">🌙</span>
-        <span class="icon-sun">☀️</span>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Changer le thème" title="Thème clair / sombre">
+        <svg class="sun-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.22 4.22l1.06 1.06M14.72 14.72l1.06 1.06M4.22 15.78l1.06-1.06M14.72 5.28l1.06-1.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <svg class="moon-icon" viewBox="0 0 20 20" fill="none"><path d="M17 12.5A7 7 0 117.5 3a5.5 5.5 0 109.5 9.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button class="nav-pill" onclick="clearAll()">Tout effacer</button>
+      <button class="ghost-btn" onclick="clearAll()">
+        <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M3 4h10M6 4V3h4v1M5 4v8h6V4H5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Effacer
+      </button>
     </div>
   </header>
 
   <main class="main">
 
-    <!-- Salary input -->
-    <div class="salary-row">
-      <div class="salary-field">
-        <span class="salary-prefix">Salaire</span>
-        <input
-          class="salary-input"
-          type="number"
-          id="salaryInput"
-          placeholder="15.00"
-          min="0"
-          step="0.5"
-          value="15"
-          aria-label="Salaire horaire brut"
-        >
-        <span class="salary-suffix">brut / heure</span>
-      </div>
-      <select class="cur-select" id="currencySelect" aria-label="Devise">
-        <option value="€ EUR">€ EUR</option>
-        <option value="$ USD">$ USD</option>
-        <option value="£ GBP">£ GBP</option>
-        <option value="¥ JPY">¥ JPY</option>
-      </select>
-    </div>
+    <!-- ── HERO SECTION ── -->
+    <section class="hero" aria-label="Chronomètre de pause">
 
-    <!-- Counter hero -->
-    <section class="counter-wrap" aria-label="Compteur de pause en cours">
-
-      <!-- Live badge — was "liveIndicator" in JS but id="sessionBadge" in HTML; unified to sessionBadge -->
-      <div class="session-badge" id="sessionBadge">
-        <span class="session-badge-dot" aria-hidden="true"></span>
+      <!-- Status pill -->
+      <div class="status-pill" id="sessionBadge">
+        <span class="status-dot" aria-hidden="true"></span>
         <span id="badgeLabel">En attente</span>
       </div>
 
-      <!-- Split counter: JS writes to each part individually -->
-      <div class="counter-main" aria-live="polite" aria-atomic="true">
-        <span class="counter-integer"  id="cInt">0</span>
-        <span class="counter-sep"      id="cSep">,</span>
-        <span class="counter-dec-big"  id="cDecBig">00</span>
-        <span class="counter-dec-small" id="cDecSmall">0000</span>
-        <span class="counter-currency" id="cCur">€</span>
+      <!-- THE BIG NUMBER -->
+      <div class="counter-stage" aria-live="polite" aria-atomic="true" aria-label="Montant gagné">
+        <div class="counter-row">
+          <span class="c-sym" id="cCur">€</span>
+          <span class="c-int" id="cInt">0</span>
+          <span class="c-sep">,</span>
+          <span class="c-cents" id="cDecBig">00</span>
+          <span class="c-micro" id="cDecSmall">0000</span>
+        </div>
+        <p class="counter-label" id="heroSub">gagné pendant cette pause</p>
       </div>
 
-      <p class="counter-unit" id="heroSub">gagné pendant cette pause</p>
-      <div class="timer-mono" id="timerDisplay" aria-live="polite">00:00:00</div>
-
-      <div class="type-tabs" role="group" aria-label="Type de pause">
-        <button class="type-tab active" id="tabPipi" onclick="setType('pipi')">💧 Pipi</button>
-        <button class="type-tab"        id="tabCaca" onclick="setType('caca')">💩 Caca</button>
+      <!-- Timer display -->
+      <div class="timer-wrap">
+        <div class="timer-display" id="timerDisplay" aria-live="polite">00:00:00</div>
       </div>
 
-      <div class="actions">
-        <button class="btn btn-start" id="startBtn"  onclick="startTimer()">▶ Démarrer</button>
-        <button class="btn btn-stop"  id="stopBtn"   onclick="stopTimer()"   disabled>■ Terminer</button>
-        <button class="btn btn-ghost" id="cancelBtn" onclick="cancelTimer()" disabled>✕ Annuler</button>
+      <!-- Type selector -->
+      <div class="type-selector" role="group" aria-label="Type de pause">
+        <button class="type-btn active" id="tabPipi" onclick="setType('pipi')">
+          <span class="type-emoji">💧</span>
+          <span>Pipi</span>
+        </button>
+        <button class="type-btn" id="tabCaca" onclick="setType('caca')">
+          <span class="type-emoji">💩</span>
+          <span>Caca</span>
+        </button>
+      </div>
+
+      <!-- Actions -->
+      <div class="action-row">
+        <button class="btn-primary" id="startBtn" onclick="startTimer()">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M5 3.5l8 4.5-8 4.5V3.5z" fill="currentColor"/></svg>
+          Démarrer
+        </button>
+        <button class="btn-dark" id="stopBtn" onclick="stopTimer()" disabled>
+          <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
+          Terminer
+        </button>
+        <button class="btn-ghost" id="cancelBtn" onclick="cancelTimer()" disabled>
+          <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Annuler
+        </button>
       </div>
 
     </section>
 
-    <!-- Stats -->
-    <div class="stats-row" role="region" aria-label="Statistiques">
-      <div class="stat">
-        <div class="stat-label">💰 Total gagné</div>
-        <div class="stat-val green" id="statTotal">0.00€</div>
-        <div class="stat-sub">toutes pauses</div>
+    <!-- ── SALARY CONFIG ── -->
+    <div class="config-row">
+      <label class="config-field" for="salaryInput">
+        <span class="config-label">Salaire horaire</span>
+        <div class="config-input-wrap">
+          <input
+            class="config-input"
+            type="number"
+            id="salaryInput"
+            placeholder="15.00"
+            min="0"
+            step="0.5"
+            value="15"
+            aria-label="Salaire horaire brut"
+          >
+          <span class="config-suffix">brut / h</span>
+        </div>
+      </label>
+      <label class="config-field" for="currencySelect">
+        <span class="config-label">Devise</span>
+        <select class="config-select" id="currencySelect" aria-label="Devise">
+          <option value="€ EUR">€ EUR</option>
+          <option value="$ USD">$ USD</option>
+          <option value="£ GBP">£ GBP</option>
+          <option value="¥ JPY">¥ JPY</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- ── STATS ── -->
+    <div class="stats-grid" role="region" aria-label="Statistiques">
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-body">
+          <div class="stat-value green" id="statTotal">0,00€</div>
+          <div class="stat-name">Total gagné</div>
+        </div>
       </div>
-      <div class="stat">
-        <div class="stat-label">⏱ Temps total</div>
-        <div class="stat-val" id="statTime">0 min</div>
-        <div class="stat-sub">aux toilettes</div>
+      <div class="stat-card">
+        <div class="stat-icon">⏱</div>
+        <div class="stat-body">
+          <div class="stat-value" id="statTime">0 min</div>
+          <div class="stat-name">Temps total</div>
+        </div>
       </div>
-      <div class="stat">
-        <div class="stat-label"># Pauses</div>
-        <div class="stat-val" id="statCount">0</div>
-        <div class="stat-sub">enregistrées</div>
+      <div class="stat-card">
+        <div class="stat-icon">🚽</div>
+        <div class="stat-body">
+          <div class="stat-value" id="statCount">0</div>
+          <div class="stat-name">Pauses</div>
+        </div>
       </div>
-      <div class="stat">
-        <div class="stat-label">∅ Durée moy.</div>
-        <div class="stat-val" id="statAvg">—</div>
-        <div class="stat-sub">par pause</div>
+      <div class="stat-card">
+        <div class="stat-icon">∅</div>
+        <div class="stat-body">
+          <div class="stat-value" id="statAvg">—</div>
+          <div class="stat-name">Durée moy.</div>
+        </div>
       </div>
     </div>
 
-    <!-- Bar chart (IDs present so JS can find them directly) -->
-    <div class="chart-section" id="chartSection" style="display:none">
+    <!-- ── CHART ── -->
+    <div class="chart-card" id="chartSection" style="display:none">
+      <div class="section-header">
+        <span class="section-title">Répartition</span>
+      </div>
       <div class="bar-chart" id="barChart"></div>
     </div>
 
-    <!-- History -->
-    <section class="history" aria-label="Historique des pauses">
-      <div class="history-head">
-        <h2 class="history-title">Historique</h2>
-        <button class="btn-clear" onclick="clearAll()">Tout effacer</button>
+    <!-- ── HISTORY ── -->
+    <section class="history-card" aria-label="Historique des pauses">
+      <div class="section-header">
+        <span class="section-title">Historique</span>
+        <button class="text-btn" onclick="clearAll()">Tout effacer</button>
       </div>
       <div id="historyList">
-        <div class="empty">
-          <span class="empty-icon" aria-hidden="true">🚽</span><br>
-          Aucune pause enregistrée.<br>Lance ton premier chrono !
+        <div class="empty-state">
+          <div class="empty-icon">🚽</div>
+          <p class="empty-title">Aucune pause enregistrée</p>
+          <p class="empty-sub">Lance ton premier chrono pour commencer</p>
         </div>
       </div>
     </section>
 
-    <footer class="footer">FlushPay — chaque pause compte 💧</footer>
+    <footer class="footer">
+      <span>FlushPay</span>
+      <span class="footer-sep">·</span>
+      <span>Chaque pause est payée</span>
+    </footer>
 
   </main>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast" aria-live="assertive"></div>
 
   <script src="app.js"></script>
 </body>
